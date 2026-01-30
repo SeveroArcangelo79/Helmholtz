@@ -1,0 +1,2509 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verio - Calculadora de Resonadores Helmholtz</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+
+            --cream-light: #FDF8F3;
+            --cream: #F5EDE4;
+            --cream-dark: #E8DDD0;
+            --sage-light: #C5D4C0;
+            --sage: #9BB08F;
+            --sage-dark: #7A9A6D;
+            --terracotta-light: #D4847C;
+            --terracotta: #B85C50;
+            --terracotta-dark: #8B3A30;
+            --wood-light: #D4B896;
+            --wood: #A67B5B;
+            --wood-dark: #6B4423;
+            --text-primary: #2C2420;
+            --text-secondary: #5C544D;
+            --text-muted: #8A817A;
+            --border: #D4C8BC;
+            --shadow-sm: 0 1px 3px rgba(44, 36, 32, 0.08);
+            --shadow-md: 0 4px 12px rgba(44, 36, 32, 0.12);
+            --shadow-lg: 0 8px 24px rgba(44, 36, 32, 0.16);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, var(--cream-light) 0%, var(--cream) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            min-height: 100vh;
+            gap: 0;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-dark) 100%);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-md);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-text {
+            color: var(--cream-light);
+        }
+
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            font-size: 11px;
+            opacity: 0.85;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--cream-light);
+            color: var(--terracotta-dark);
+        }
+
+        .btn-primary:hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: var(--cream-light);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 4px;
+            border-radius: var(--radius-md);
+        }
+
+        .tab {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            background: var(--cream-light);
+            color: var(--terracotta-dark);
+        }
+
+        .tab:hover:not(.active) {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .control-panel {
+            background: var(--cream-light);
+            border-right: 1px solid var(--border);
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .panel-section {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 14px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        .panel-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--cream-dark);
+        }
+
+        .panel-section-header svg {
+            width: 16px;
+            height: 16px;
+            color: var(--terracotta);
+        }
+
+        .panel-section-header h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 80px 44px;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .form-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-row label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .form-row input[type="number"],
+        .form-row select {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            padding: 6px 8px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--cream-light);
+            color: var(--text-primary);
+            text-align: right;
+            transition: all 0.2s ease;
+        }
+
+        .form-row select {
+            text-align: left;
+            grid-column: span 2;
+        }
+
+        .form-row input[type="number"]:focus,
+        .form-row select:focus {
+            outline: none;
+            border-color: var(--sage);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(155, 176, 143, 0.2);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--terracotta);
+            cursor: pointer;
+        }
+
+        .form-row-readonly input {
+            background: var(--cream) !important;
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .material-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--cream-light);
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+        }
+
+        .material-toggle label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        .correction-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-top: 10px;
+            background: var(--cream-light);
+            border-radius: var(--radius-sm);
+            border-top: 1px dashed var(--border);
+        }
+
+        .correction-toggle label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            flex: 1;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 32px !important;
+            min-width: 32px !important;
+            max-width: 32px !important;
+            height: 18px !important;
+            flex-shrink: 0;
+            flex-grow: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: 0.2s;
+            border-radius: 18px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.2s;
+            border-radius: 50%;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .toggle-switch input:checked+.toggle-slider {
+            background-color: var(--sage);
+        }
+
+        .toggle-switch input:checked+.toggle-slider:before {
+            transform: translateX(14px);
+        }
+
+        .material-params {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+            margin-top: 10px;
+        }
+
+        .material-params.visible {
+            display: flex;
+        }
+
+        .results-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, var(--sage-light) 0%, var(--sage) 100%);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-card.highlight {
+            background: linear-gradient(135deg, var(--terracotta-light) 0%, var(--terracotta) 100%);
+        }
+
+        .result-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: white;
+            opacity: 0.9;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .assistant-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .assistant-input input {
+            flex: 1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--cream-light);
+            color: var(--text-primary);
+            text-align: center;
+        }
+
+        .assistant-input input:focus {
+            outline: none;
+            border-color: var(--terracotta);
+            background: white;
+        }
+
+        .assistant-input span {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-propose {
+            width: 100%;
+            background: linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-dark) 100%);
+            color: white;
+            padding: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: var(--radius-md);
+        }
+
+        .btn-propose:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .main-content {
+            background: var(--cream);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .tab-content {
+            flex: 1;
+            display: none;
+            padding: 20px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-container {
+
+            width: 80%;
+            height: 55vh;
+            max-width: 900px;
+            max-height: 500px;
+            min-height: 300px;
+            margin: 0 auto 20px auto;
+            flex-shrink: 0;
+
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (max-width: 768px) {
+            .canvas-container {
+                width: 100%;
+                height: 350px;
+            }
+        }
+
+        #panelCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .canvas-info {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(44, 36, 32, 0.85);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(8px);
+        }
+
+        .canvas-info span {
+            color: var(--sage-light);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .formula-section {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .formula-section {
+                width: 100%;
+            }
+        }
+
+        .formula-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .formula-content {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 8px;
+            background: var(--cream-light);
+            border-radius: var(--radius-sm);
+        }
+
+        .formula-variables {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 6px 16px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .formula-var {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .formula-var span {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--terracotta);
+            min-width: 32px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            padding: 20px;
+            height: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-shrink: 0;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chart-controls label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .chart-controls input {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            width: 80px;
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        .info-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+            flex-shrink: 0;
+        }
+
+        .info-card {
+            background: var(--cream-light);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            border: 1px solid var(--border);
+        }
+
+        .info-card-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .info-card-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--terracotta);
+        }
+
+        .info-card-subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(44, 36, 32, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .btn-outline {
+            background: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-outline:hover {
+            background: var(--cream-light);
+        }
+
+        .btn-success {
+            background: var(--sage);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: var(--sage-dark);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1001;
+        }
+
+        .toast {
+            background: var(--text-primary);
+            color: white;
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            margin-top: 10px;
+            box-shadow: var(--shadow-lg);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .toast.success {
+            background: var(--sage-dark);
+        }
+
+        .toast.warning {
+            background: var(--terracotta);
+        }
+
+        .toast.error {
+            background: var(--terracotta-dark);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+
+            .control-panel {
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                max-height: 50vh;
+            }
+        }
+
+        .control-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .control-panel::-webkit-scrollbar-track {
+            background: var(--cream);
+        }
+
+        .control-panel::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .form-row input.warning {
+            border-color: #D4A24C;
+            background: rgba(212, 162, 76, 0.1);
+        }
+
+        .form-row input.error {
+            border-color: #C84A3E;
+            background: rgba(200, 74, 62, 0.1);
+        }
+
+        .validation-message {
+            grid-column: 1 / -1;
+            font-size: 10px;
+            margin-top: -4px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .validation-message.warning {
+            display: block;
+            color: #D4A24C;
+            background: rgba(212, 162, 76, 0.1);
+        }
+
+        .validation-message.error {
+            display: block;
+            color: #C84A3E;
+            background: rgba(200, 74, 62, 0.1);
+        }
+
+        .view-toggle {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            display: flex;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+        }
+
+        .view-toggle button {
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .view-toggle button.active {
+            background: var(--terracotta);
+            color: white;
+        }
+
+        .solutions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .solution-card {
+            background: var(--cream-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .solution-card:hover {
+            background: white;
+            transform: translateX(4px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .solution-card.selected {
+            border-color: var(--terracotta);
+            background: white;
+        }
+
+        .solution-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .solution-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .solution-score {
+            font-size: 11px;
+            padding: 4px 8px;
+            background: var(--sage);
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .solution-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .solution-detail {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .solution-detail span:first-child {
+            color: var(--text-muted);
+        }
+
+        .solution-detail span:last-child {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .export-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .export-option {
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .export-option:hover {
+            border-color: var(--terracotta);
+            background: var(--cream-light);
+        }
+
+        .export-option-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .export-option-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+
+        <header class="header">
+            <div class="logo">
+                <div class="logo-text">
+                    <h1>Verio</h1>
+                    <span>Calculadora de Resonadores Helmholtz</span>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('panel')">Panel</button>
+                <button class="tab" onclick="switchTab('absorption')">Coef. de Absorción α(f)</button>
+            </div>
+
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="showExportModal()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Exportar
+                </button>
+            </div>
+        </header>
+
+
+        <aside class="control-panel">
+
+            <section class="panel-section">
+                <div class="panel-section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <line x1="9" y1="3" x2="9" y2="21" />
+                        <line x1="15" y1="3" x2="15" y2="21" />
+                    </svg>
+                    <h3>Parámetros del Panel (mm)</h3>
+                </div>
+
+                <div class="form-row">
+                    <label>Ancho del Panel</label>
+                    <input type="number" id="panel_ancho" value="600" min="100" step="10">
+                    <div class="checkbox-wrapper"><input type="checkbox" id="fix_panel_ancho" title="Fijar"></div>
+                    <div class="validation-message" id="val_panel_ancho"></div>
+                </div>
+                <div class="form-row">
+                    <label>Alto del Panel</label>
+                    <input type="number" id="panel_alto" value="400" min="100" step="10">
+                    <div class="checkbox-wrapper"><input type="checkbox" id="fix_panel_alto" title="Fijar"></div>
+                    <div class="validation-message" id="val_panel_alto"></div>
+                </div>
+                <div class="form-row">
+                    <label>Diámetro Perforación</label>
+                    <input type="number" id="diametro_perf" value="10" min="1" step="1">
+                    <div class="checkbox-wrapper"><input type="checkbox" id="fix_diametro_perf" title="Fijar"></div>
+                    <div class="validation-message" id="val_diametro_perf"></div>
+                </div>
+                <div class="form-row">
+                    <label>Número de Filas</label>
+                    <input type="number" id="filas" value="10" min="1" step="1">
+                    <div class="checkbox-wrapper"><input type="checkbox" id="fix_filas" title="Fijar"></div>
+                    <div class="validation-message" id="val_filas"></div>
+                </div>
+                <div class="form-row">
+                    <label>Número de Columnas</label>
+                    <input type="number" id="columnas" value="15" min="1" step="1">
+                    <div class="checkbox-wrapper"><input type="checkbox" id="fix_columnas" title="Fijar"></div>
+                    <div class="validation-message" id="val_columnas"></div>
+                </div>
+                <div class="form-row">
+                    <label>Espesor del Panel</label>
+                    <input type="number" id="espesor_panel" value="18" min="1" step="1">
+                    <div class="checkbox-wrapper"><input type="checkbox" id="fix_espesor_panel" title="Fijar"></div>
+                    <div class="validation-message" id="val_espesor_panel"></div>
+                </div>
+                <div class="form-row">
+                    <label>Profundidad Cámara</label>
+                    <input type="number" id="profundidad_camara" value="100" min="10" step="5">
+                    <div class="checkbox-wrapper"><input type="checkbox" id="fix_profundidad_camara" title="Fijar">
+                    </div>
+                    <div class="validation-message" id="val_profundidad_camara"></div>
+                </div>
+                <div class="form-row form-row-readonly">
+                    <label>Total Perforaciones</label>
+                    <input type="number" id="total_perforaciones" value="150" readonly>
+                    <div class="checkbox-wrapper"></div>
+                </div>
+                <div class="correction-toggle">
+                    <label>Corregir interacción entre perforaciones</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="use_interaction_correction" onchange="updateDisplay()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </section>
+
+
+            <section class="panel-section">
+                <div class="panel-section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                    </svg>
+                    <h3>Material Absorbente</h3>
+                </div>
+
+                <div class="material-toggle">
+                    <label>Incluir material poroso en cavidad</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="use_absorber" onchange="toggleAbsorberParams()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="material-params" id="absorberParams">
+                    <div class="form-row">
+                        <label>Material predefinido</label>
+                        <select id="material_preset" onchange="applyMaterialPreset()">
+                            <option value="custom">Personalizado</option>
+                            <option value="rockwool_40">Lana de roca 40 kg/m³</option>
+                            <option value="rockwool_70">Lana de roca 70 kg/m³</option>
+                            <option value="rockwool_100">Lana de roca 100 kg/m³</option>
+                            <option value="glasswool_12">Lana de vidrio 12 kg/m³</option>
+                            <option value="glasswool_35">Lana de vidrio 35 kg/m³</option>
+                            <option value="glasswool_50">Lana de vidrio 50 kg/m³</option>
+                            <option value="polyester_30">Poliéster 30 kg/m³</option>
+                            <option value="foam_pu">Espuma poliuretano 25 kg/m³</option>
+                            <option value="felt">Fieltro acústico</option>
+                        </select>
+                        <div></div>
+                    </div>
+                    <div class="form-row">
+                        <label>Resistividad al flujo (Pa·s/m²)</label>
+                        <input type="number" id="flow_resistivity" value="10000" min="1000" max="100000" step="1000">
+                        <div></div>
+                    </div>
+                    <div class="form-row">
+                        <label>Espesor material (mm)</label>
+                        <input type="number" id="absorber_thickness" value="50" min="5" max="200" step="5">
+                        <div></div>
+                    </div>
+                    <div class="form-row">
+                        <label>Posición del material</label>
+                        <select id="absorber_position">
+                            <option value="full">Relleno total interior</option>
+                            <option value="back">Relleno parcial (contra pared trasera)</option>
+                        </select>
+                        <div></div>
+                    </div>
+                </div>
+            </section>
+
+
+            <section class="panel-section">
+                <div class="panel-section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 6v6l4 2" />
+                    </svg>
+                    <h3>Diseño por Frecuencia Objetivo</h3>
+                </div>
+
+                <div class="assistant-input">
+                    <input type="number" id="frecuencia_objetivo" value="300" min="20" max="2000" step="10">
+                    <span>Hz</span>
+                </div>
+
+                <button class="btn btn-propose" onclick="proposeMultipleSolutions()">
+                    Proponer Múltiples Soluciones
+                </button>
+            </section>
+
+
+            <section class="panel-section">
+                <div class="panel-section-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                    </svg>
+                    <h3>Resultados</h3>
+                </div>
+
+                <div class="results-grid">
+                    <div class="result-card highlight">
+                        <span class="result-label">Frecuencia (F)</span>
+                        <span class="result-value" id="result_freq">--- Hz</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-label">Ratio Perforación (p)</span>
+                        <span class="result-value" id="result_ratio">---</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-label">α máx @ F₀</span>
+                        <span class="result-value" id="result_alpha_max">---</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-label">Ancho de Banda (Q)</span>
+                        <span class="result-value" id="result_q">---</span>
+                    </div>
+                </div>
+            </section>
+        </aside>
+
+
+        <main class="main-content">
+
+            <div class="tab-content active" id="tab-panel">
+                <div class="canvas-container">
+                    <canvas id="panelCanvas"></canvas>
+                    <div class="canvas-info" id="canvasInfo">
+                        Ø Perforación: <span id="info_diametro">10.0</span> mm | Profundidad: <span
+                            id="info_profundidad">100</span> mm
+                    </div>
+                    <div id="panel3DContainer" style="display:none; width:100%; height:100%;"></div>
+                    <div class="view-toggle">
+                        <button class="active" onclick="switchView('2d')">2D</button>
+                        <button onclick="switchView('3d')">3D</button>
+                    </div>
+                </div>
+
+                <div class="formula-section">
+                    <div class="formula-header">Fórmula de Resonancia Helmholtz</div>
+                    <div class="formula-content">
+                        f = (c / 2π) × √(p / (D × L<sub>eff</sub>))
+                    </div>
+                    <div class="formula-variables">
+                        <div class="formula-var"><span>f</span> Frecuencia de resonancia [Hz]</div>
+                        <div class="formula-var"><span>c</span> Velocidad del sonido ≈ 343 m/s</div>
+                        <div class="formula-var"><span>p</span> Ratio de perforación = Área perforada / Área panel</div>
+                        <div class="formula-var"><span>D</span> Profundidad de la cavidad [m]</div>
+                        <div class="formula-var"><span>L<sub>eff</sub></span> Longitud efectiva = t + 0.8d [m]</div>
+                        <div class="formula-var"><span>t</span> Espesor del panel [m]</div>
+                        <div class="formula-var"><span>d</span> Diámetro de perforación [m]</div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="tab-content" id="tab-absorption">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <div class="chart-title">Coeficiente de Absorción α(f)</div>
+                        <div class="chart-controls">
+                            <label>Desde:</label>
+                            <input type="number" id="freq_start" value="50" min="20" max="500" step="10"
+                                onchange="updateChart()">
+                            <label>Hz</label>
+                            <label style="margin-left: 12px;">Hasta:</label>
+                            <input type="number" id="freq_end" value="2000" min="500" max="5000" step="100"
+                                onchange="updateChart()">
+                            <label>Hz</label>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="absorptionChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #B85C50;"></div>
+                            <span>Sin material fonoabsorbente</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #7A9A6D;"></div>
+                            <span>Con material fonoabsorbente</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-cards">
+                    <div class="info-card">
+                        <div class="info-card-title">Frecuencia de Resonancia</div>
+                        <div class="info-card-value" id="info_f0">--- Hz</div>
+                        <div class="info-card-subtitle">Máxima absorción</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">Ancho de Banda</div>
+                        <div class="info-card-value" id="info_bandwidth">--- Hz</div>
+                        <div class="info-card-subtitle">Q = <span id="info_q">---</span></div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card-title">α Máximo</div>
+                        <div class="info-card-value" id="info_alpha">---</div>
+                        <div class="info-card-subtitle">Con material: <span id="info_alpha_with">---</span></div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-card">
+                            <div class="info-card-title">Armónicos Relevantes</div>
+                            <div class="info-card-value" style="font-size: 14px;" id="info_harmonics">---</div>
+                            <div class="info-card-subtitle">Frecuencias secundarias</div>
+                        </div>
+                        <div class="info-card-title">Modelo Utilizado</div>
+                        <div class="info-card-value" style="font-size: 14px;" id="info_model">Delany-Bazley-Miki</div>
+                        <div class="info-card-subtitle">Material poroso</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <div class="modal-overlay" id="solutionsModal">
+        <div class="modal">
+            <h3>Soluciones Propuestas</h3>
+            <p>Se encontraron <span id="solutions_count">0</span> diseños válidos. Seleccioná uno:</p>
+            <div class="solutions-list" id="solutionsList"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-outline" onclick="closeSolutionsModal()">Cancelar</button>
+                <button class="btn btn-success" onclick="applySelectedSolution()">Aplicar Diseño</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal">
+            <h3>Exportar Diseño</h3>
+            <p>Por favor, seleccioná el formato:</p>
+            <div class="export-options">
+                <div class="export-option" onclick="exportToCSV()">
+                    <div class="export-option-title">📊 Datos CSV</div>
+                    <div class="export-option-desc">Tabla con parámetros y curvas de absorción.</div>
+                </div>
+                <div class="export-option" onclick="exportToPDF()">
+                    <div class="export-option-title">📄 Planos PDF</div>
+                    <div class="export-option-desc">Documento técnico con especificaciones.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-outline" onclick="closeExportModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+
+        const C = 343;
+        const RHO_0 = 1.21;
+        const Z_0 = RHO_0 * C;
+
+        const MATERIAL_PRESETS = {
+            'rockwool_40': { sigma: 8000, name: 'Lana de roca 40 kg/m³' },
+            'rockwool_70': { sigma: 15000, name: 'Lana de roca 70 kg/m³' },
+            'rockwool_100': { sigma: 25000, name: 'Lana de roca 100 kg/m³' },
+            'glasswool_12': { sigma: 4000, name: 'Lana de vidrio 12 kg/m³' },
+            'glasswool_35': { sigma: 10000, name: 'Lana de vidrio 35 kg/m³' },
+            'glasswool_50': { sigma: 14000, name: 'Lana de vidrio 50 kg/m³' },
+            'polyester_30': { sigma: 7000, name: 'Poliéster 30 kg/m³' },
+            'foam_pu': { sigma: 6000, name: 'Espuma poliuretano 25 kg/m³' },
+            'felt': { sigma: 20000, name: 'Fieltro acústico' }
+        };
+
+        const inputs = {
+            panel_ancho: document.getElementById('panel_ancho'),
+            panel_alto: document.getElementById('panel_alto'),
+            diametro_perf: document.getElementById('diametro_perf'),
+            filas: document.getElementById('filas'),
+            columnas: document.getElementById('columnas'),
+            espesor_panel: document.getElementById('espesor_panel'),
+            profundidad_camara: document.getElementById('profundidad_camara')
+        };
+
+        const fixedCheckboxes = {
+            panel_ancho: document.getElementById('fix_panel_ancho'),
+            panel_alto: document.getElementById('fix_panel_alto'),
+            diametro_perf: document.getElementById('fix_diametro_perf'),
+            filas: document.getElementById('fix_filas'),
+            columnas: document.getElementById('fix_columnas'),
+            espesor_panel: document.getElementById('fix_espesor_panel'),
+            profundidad_camara: document.getElementById('fix_profundidad_camara')
+        };
+
+
+        const VALIDATION_RANGES = {
+            panel_ancho: { min: 100, max: 2000, warning: [200, 1500] },
+            panel_alto: { min: 100, max: 2000, warning: [200, 1500] },
+            diametro_perf: { min: 5, max: 50, warning: [8, 30] },
+            espesor_panel: { min: 5, max: 50, warning: [12, 25] },
+            profundidad_camara: { min: 20, max: 500, warning: [50, 300] },
+            filas: { min: 1, max: 100 },
+            columnas: { min: 1, max: 100 }
+        };
+
+        const canvas = document.getElementById('panelCanvas');
+        const ctx = canvas.getContext('2d');
+        let absorptionChart = null;
+
+        let scene3D, camera3D, renderer3D, currentView = '2d';
+        let selectedSolutionIndex = -1;
+        let currentSolutions = [];
+
+
+        function validateInput(name, value) {
+            const range = VALIDATION_RANGES[name];
+            if (!range) return { valid: true };
+
+            const input = inputs[name];
+            const valMsg = document.getElementById(`val_${name}`);
+
+            if (!input || !valMsg) return { valid: true };
+
+
+            if (value < range.min || value > range.max) {
+                input.classList.add('error');
+                input.classList.remove('warning');
+                valMsg.textContent = `Debe estar entre ${range.min} y ${range.max}`;
+                valMsg.className = 'validation-message error';
+                return { valid: false, level: 'error' };
+            }
+
+
+            if (range.warning && (value < range.warning[0] || value > range.warning[1])) {
+                input.classList.add('warning');
+                input.classList.remove('error');
+                valMsg.textContent = `Valor atípico. Recomendado: ${range.warning[0]}-${range.warning[1]}`;
+                valMsg.className = 'validation-message warning';
+                return { valid: true, level: 'warning' };
+            }
+
+
+            input.classList.remove('error', 'warning');
+            valMsg.className = 'validation-message';
+            return { valid: true, level: 'ok' };
+        }
+
+
+        function validateSpacing(data) {
+            const spacingX = data.panel_ancho / data.columnas;
+            const spacingY = data.panel_alto / data.filas;
+            const minSpacing = data.diametro_perf * 1.5;
+
+            if (spacingX < minSpacing || spacingY < minSpacing) {
+                showToast('⚠️ Espaciado entre perforaciones menor a 1.5× diámetro', 'warning');
+                return false;
+            }
+            return true;
+        }
+
+
+        function validateFrequencyRange(freq) {
+            if (freq < 50) {
+                showToast('⚠️ Frecuencia muy baja (<50 Hz). Eficiencia limitada', 'warning');
+            } else if (freq > 500) {
+                showToast('⚠️ Frecuencia alta (>500 Hz). Considere otros tratamientos', 'warning');
+            }
+        }
+
+        function getValues() {
+            return {
+                panel_ancho: parseFloat(inputs.panel_ancho.value) || 0,
+                panel_alto: parseFloat(inputs.panel_alto.value) || 0,
+                diametro_perf: parseFloat(inputs.diametro_perf.value) || 0,
+                filas: parseInt(inputs.filas.value) || 0,
+                columnas: parseInt(inputs.columnas.value) || 0,
+                espesor_panel: parseFloat(inputs.espesor_panel.value) || 0,
+                profundidad_camara: parseFloat(inputs.profundidad_camara.value) || 0
+            };
+        }
+
+        function getAbsorberParams() {
+            return {
+                useAbsorber: document.getElementById('use_absorber').checked,
+                flowResistivity: parseFloat(document.getElementById('flow_resistivity').value) || 10000,
+                thickness: parseFloat(document.getElementById('absorber_thickness').value) || 50,
+                position: document.getElementById('absorber_position').value
+            };
+        }
+
+        class Complex {
+            constructor(re, im = 0) {
+                this.re = re;
+                this.im = im;
+            }
+
+            add(c) {
+                return new Complex(this.re + c.re, this.im + c.im);
+            }
+
+            sub(c) {
+                return new Complex(this.re - c.re, this.im - c.im);
+            }
+
+            mul(c) {
+                return new Complex(
+                    this.re * c.re - this.im * c.im,
+                    this.re * c.im + this.im * c.re
+                );
+            }
+
+            div(c) {
+                const denom = c.re * c.re + c.im * c.im;
+                return new Complex(
+                    (this.re * c.re + this.im * c.im) / denom,
+                    (this.im * c.re - this.re * c.im) / denom
+                );
+            }
+
+            abs() {
+                return Math.sqrt(this.re * this.re + this.im * this.im);
+            }
+
+            static fromReal(r) {
+                return new Complex(r, 0);
+            }
+
+            static j() {
+                return new Complex(0, 1);
+            }
+
+            scale(s) {
+                return new Complex(this.re * s, this.im * s);
+            }
+
+            static cosh(c) {
+                return new Complex(
+                    Math.cosh(c.re) * Math.cos(c.im),
+                    Math.sinh(c.re) * Math.sin(c.im)
+                );
+            }
+
+            static sinh(c) {
+                return new Complex(
+                    Math.sinh(c.re) * Math.cos(c.im),
+                    Math.cosh(c.re) * Math.sin(c.im)
+                );
+            }
+
+            static tanh(c) {
+                return Complex.sinh(c).div(Complex.cosh(c));
+            }
+        }
+
+        function delanyBazleyMiki(f, sigma) {
+
+            const X = f / sigma;
+
+            const Zc_re = RHO_0 * C * (1 + 0.0699 * Math.pow(X, -0.632));
+            const Zc_im = -RHO_0 * C * 0.107 * Math.pow(X, -0.632);
+
+            const omega = 2 * Math.PI * f;
+            const k_re = (omega / C) * (1 + 0.109 * Math.pow(X, -0.618));
+            const k_im = -(omega / C) * 0.160 * Math.pow(X, -0.618);
+
+            return {
+                Zc: new Complex(Zc_re, Zc_im),
+                k: new Complex(k_re, k_im)
+            };
+        }
+
+        function calculateAbsorption(f, data, absorberParams) {
+            const ancho_m = data.panel_ancho / 1000;
+            const alto_m = data.panel_alto / 1000;
+            const d_m = data.diametro_perf / 1000;
+            const t_m = data.espesor_panel / 1000;
+            const D_m = data.profundidad_camara / 1000;
+            const n = data.filas * data.columnas;
+
+            if (ancho_m <= 0 || alto_m <= 0 || n === 0 || D_m <= 0) return { alpha: 0, alphaWithAbsorber: 0 };
+
+            const omega = 2 * Math.PI * f;
+            const k0 = omega / C;
+
+            const areaPerf = n * Math.PI * Math.pow(d_m / 2, 2);
+            const areaPanel = ancho_m * alto_m;
+            const p = areaPerf / areaPanel;
+
+            if (p <= 0) return { alpha: 0, alphaWithAbsorber: 0 };
+
+            const useInteraction = document.getElementById('use_interaction_correction').checked;
+            let delta = 0.8 * d_m;
+            if (useInteraction && p > 0) {
+                const sqrtP = Math.sqrt(p);
+                const mellingFactor = 1 - 1.47 * sqrtP + 0.47 * Math.pow(sqrtP, 3);
+                delta = 0.8 * d_m * Math.max(0.3, mellingFactor);
+            }
+            const L_eff = t_m + delta;
+
+            const m_air = RHO_0 * L_eff / p;
+            const X_m = omega * m_air;
+
+            const r_visc = Math.sqrt(8 * omega * RHO_0 * 1.84e-5) * (t_m / d_m + 1) / p;
+
+            const Z_panel = new Complex(r_visc, X_m);
+
+            const Z_cavity_air = new Complex(0, -Z_0 / Math.tan(k0 * D_m));
+
+            const Z_s_no_abs = Z_panel.add(Z_cavity_air);
+
+            const R_no_abs = Z_s_no_abs.sub(Complex.fromReal(Z_0)).div(Z_s_no_abs.add(Complex.fromReal(Z_0)));
+            const alpha_no_abs = 1 - Math.pow(R_no_abs.abs(), 2);
+
+            let alpha_with_abs = alpha_no_abs;
+
+            if (absorberParams.useAbsorber) {
+                const sigma = absorberParams.flowResistivity;
+                const d_abs = absorberParams.thickness / 1000;
+                const position = absorberParams.position;
+
+                const dbm = delanyBazleyMiki(f, sigma);
+                const Zc = dbm.Zc;
+                const k_abs = dbm.k;
+
+                let Z_cavity;
+
+                if (position === 'full' || d_abs >= D_m) {
+
+                    const kd = k_abs.scale(D_m);
+                    Z_cavity = Zc.mul(Complex.cosh(kd)).div(Complex.sinh(kd));
+                } else if (position === 'panel') {
+
+                    const d_air = D_m - d_abs;
+                    const Z_air_back = new Complex(0, -Z_0 / Math.tan(k0 * d_air));
+                    const kd = k_abs.scale(d_abs);
+                    const cothKd = Complex.cosh(kd).div(Complex.sinh(kd));
+                    const tanhKd = Complex.tanh(kd);
+
+                    const Z_abs_input = Zc.mul(Z_air_back.add(Zc.mul(tanhKd))).div(Zc.add(Z_air_back.mul(tanhKd)));
+                    Z_cavity = Z_abs_input;
+                } else {
+
+                    const d_air = D_m - d_abs;
+                    const kd = k_abs.scale(d_abs);
+                    const Z_abs_back = Zc.mul(Complex.cosh(kd)).div(Complex.sinh(kd));
+
+                    const Z_air_front = Complex.fromReal(Z_0).mul(
+                        Z_abs_back.add(Complex.j().scale(Z_0 * Math.tan(k0 * d_air)))
+                    ).div(
+                        Complex.fromReal(Z_0).add(Complex.j().mul(Z_abs_back).scale(Math.tan(k0 * d_air)))
+                    );
+                    Z_cavity = Z_air_front;
+                }
+
+                const Z_s_with_abs = Z_panel.add(Z_cavity);
+                const R_with_abs = Z_s_with_abs.sub(Complex.fromReal(Z_0)).div(Z_s_with_abs.add(Complex.fromReal(Z_0)));
+                alpha_with_abs = 1 - Math.pow(R_with_abs.abs(), 2);
+            }
+
+            return {
+                alpha: Math.max(0, Math.min(1, alpha_no_abs)),
+                alphaWithAbsorber: Math.max(0, Math.min(1, alpha_with_abs))
+            };
+        }
+
+        function calculateFrequency(data) {
+            const ancho_m = data.panel_ancho / 1000;
+            const alto_m = data.panel_alto / 1000;
+            const d_m = data.diametro_perf / 1000;
+            const t_m = data.espesor_panel / 1000;
+            const D_m = data.profundidad_camara / 1000;
+            const n = data.filas * data.columnas;
+
+            const areaPanel = ancho_m * alto_m;
+            if (areaPanel === 0 || n === 0) return { frecuencia: 0, ratio: 0, area_mm2: 0 };
+
+            const areaPerf = Math.PI * Math.pow(d_m / 2, 2);
+            const areaTotalPerf = n * areaPerf;
+            const ratio = areaTotalPerf / areaPanel;
+
+            const useInteraction = document.getElementById('use_interaction_correction').checked;
+            let delta = 0.8 * d_m;
+            if (useInteraction && ratio > 0) {
+                const sqrtP = Math.sqrt(ratio);
+                const mellingFactor = 1 - 1.47 * sqrtP + 0.47 * Math.pow(sqrtP, 3);
+                delta = 0.8 * d_m * Math.max(0.3, mellingFactor);
+            }
+            const L_eff = t_m + delta;
+
+            let frecuencia = 0;
+            if (D_m > 0 && L_eff > 0 && ratio > 0) {
+                frecuencia = (C / (2 * Math.PI)) * Math.sqrt(ratio / (D_m * L_eff));
+            }
+
+            return {
+                frecuencia,
+                ratio,
+                area_mm2: areaTotalPerf * 1e6
+            };
+        }
+
+        function updateDisplay() {
+            const data = getValues();
+
+
+            Object.keys(inputs).forEach(name => {
+                validateInput(name, data[name]);
+            });
+
+
+            validateSpacing(data);
+
+            const absorberParams = getAbsorberParams();
+            const results = calculateFrequency(data);
+
+
+            if (results.frecuencia > 0) {
+                validateFrequencyRange(results.frecuencia);
+            }
+
+            document.getElementById('total_perforaciones').value = data.filas * data.columnas;
+
+            document.getElementById('result_freq').textContent =
+                results.frecuencia > 0 ? `${results.frecuencia.toFixed(1)} Hz` : '--- Hz';
+            document.getElementById('result_ratio').textContent =
+                results.ratio > 0 ? results.ratio.toFixed(4) : '---';
+
+            if (results.frecuencia > 0) {
+                const alphaAtRes = calculateAbsorption(results.frecuencia, data, absorberParams);
+                const alphaDisplay = absorberParams.useAbsorber ? alphaAtRes.alphaWithAbsorber : alphaAtRes.alpha;
+                document.getElementById('result_alpha_max').textContent = alphaDisplay.toFixed(3);
+
+
+                const bandwidth = results.frecuencia / 5;
+                const Q = results.frecuencia / bandwidth;
+                document.getElementById('result_q').textContent = Q.toFixed(1);
+            } else {
+                document.getElementById('result_alpha_max').textContent = '---';
+                document.getElementById('result_q').textContent = '---';
+            }
+
+            document.getElementById('info_diametro').textContent = data.diametro_perf.toFixed(1);
+            document.getElementById('info_profundidad').textContent = data.profundidad_camara.toFixed(0);
+
+            if (results.frecuencia > 0) {
+                document.getElementById('frecuencia_objetivo').value = Math.round(results.frecuencia);
+            }
+
+            drawPanel(data);
+            updateChart();
+        }
+
+        function toggleAbsorberParams() {
+            const params = document.getElementById('absorberParams');
+            const useAbsorber = document.getElementById('use_absorber').checked;
+            params.classList.toggle('visible', useAbsorber);
+            updateDisplay();
+        }
+
+        function applyMaterialPreset() {
+            const preset = document.getElementById('material_preset').value;
+            if (preset !== 'custom' && MATERIAL_PRESETS[preset]) {
+                document.getElementById('flow_resistivity').value = MATERIAL_PRESETS[preset].sigma;
+            }
+            updateDisplay();
+        }
+
+        function updateChart() {
+            const data = getValues();
+            const absorberParams = getAbsorberParams();
+            const freqStart = parseInt(document.getElementById('freq_start').value) || 50;
+            const freqEnd = parseInt(document.getElementById('freq_end').value) || 2000;
+
+            const frequencies = [];
+            const alphaNoAbs = [];
+            const alphaWithAbs = [];
+
+            const numPoints = 200;
+            const logStart = Math.log10(freqStart);
+            const logEnd = Math.log10(freqEnd);
+            const logStep = (logEnd - logStart) / (numPoints - 1);
+
+            let maxAlpha = 0;
+            let maxAlphaFreq = 0;
+            let maxAlphaWith = 0;
+            let maxAlphaWithFreq = 0;
+
+            for (let i = 0; i < numPoints; i++) {
+                const f = Math.pow(10, logStart + i * logStep);
+                frequencies.push(f);
+
+                const result = calculateAbsorption(f, data, absorberParams);
+                alphaNoAbs.push(result.alpha);
+                alphaWithAbs.push(result.alphaWithAbsorber);
+
+                if (result.alpha > maxAlpha) {
+                    maxAlpha = result.alpha;
+                    maxAlphaFreq = f;
+                }
+                if (result.alphaWithAbsorber > maxAlphaWith) {
+                    maxAlphaWith = result.alphaWithAbsorber;
+                    maxAlphaWithFreq = f;
+                }
+            }
+
+            const targetAlpha = maxAlpha * 0.5;
+            let f_low = 0, f_high = 0;
+            for (let i = 0; i < frequencies.length; i++) {
+                if (alphaNoAbs[i] >= targetAlpha && f_low === 0) f_low = frequencies[i];
+                if (alphaNoAbs[i] >= targetAlpha) f_high = frequencies[i];
+            }
+            const bandwidth = f_high - f_low;
+            const Q = maxAlphaFreq / (bandwidth || 1);
+
+            document.getElementById('info_f0').textContent = `${maxAlphaFreq.toFixed(0)} Hz`;
+            document.getElementById('info_bandwidth').textContent = `${bandwidth.toFixed(0)} Hz`;
+            document.getElementById('info_q').textContent = Q.toFixed(1);
+
+            const f0 = maxAlphaFreq;
+            const harmonics = [2 * f0, 3 * f0, 4 * f0].filter(f => f < freqEnd);
+            const harmonicsText = harmonics.length > 0
+                ? harmonics.map(f => Math.round(f) + ' Hz').join(', ')
+                : 'Ninguno en rango';
+
+            document.getElementById('info_alpha').textContent = maxAlpha.toFixed(3);
+            document.getElementById('info_alpha_with').textContent = absorberParams.useAbsorber ? maxAlphaWith.toFixed(3) : 'N/A';
+            document.getElementById('info_harmonics').textContent = harmonicsText;
+
+            const chartCanvas = document.getElementById('absorptionChart');
+            const chartCtx = chartCanvas.getContext('2d');
+
+            if (absorptionChart) {
+                absorptionChart.destroy();
+            }
+
+            const datasets = [{
+                label: 'Sin material fonoabsorbente',
+                data: frequencies.map((f, i) => ({ x: f, y: alphaNoAbs[i] })),
+                borderColor: '#B85C50',
+                backgroundColor: 'rgba(184, 92, 80, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0
+            }];
+
+            if (absorberParams.useAbsorber) {
+                datasets.push({
+                    label: 'Con material fonoabsorbente',
+                    data: frequencies.map((f, i) => ({ x: f, y: alphaWithAbs[i] })),
+                    borderColor: '#7A9A6D',
+                    backgroundColor: 'rgba(122, 154, 109, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0
+                });
+            }
+
+            absorptionChart = new Chart(chartCtx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: {
+                                display: true,
+                                text: 'Frecuencia',
+                                font: { family: 'DM Sans', size: 12 }
+                            },
+                            min: freqStart,
+                            max: freqEnd,
+                            grid: { color: 'rgba(0,0,0,0.05)' },
+                            ticks: {
+                                callback: function (value) {
+                                    const octaves = [31.25, 62.5, 125, 250, 500, 1000, 2000, 4000, 8000, 16000, 20000];
+                                    const tolerance = 0.05;
+                                    for (const oct of octaves) {
+                                        if (Math.abs(value - oct) / oct < tolerance) {
+                                            if (value >= 1000) {
+                                                return (value / 1000) + ' kHz';
+                                            }
+                                            return value + ' Hz';
+                                        }
+                                    }
+                                    return '';
+                                },
+                                maxTicksLimit: 10,
+                                font: { family: 'DM Sans', size: 10 }
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Coeficiente de Absorción α',
+                                font: { family: 'DM Sans', size: 12 }
+                            },
+                            min: 0,
+                            max: 1,
+                            grid: { color: 'rgba(0,0,0,0.05)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(44, 36, 32, 0.9)',
+                            titleFont: { family: 'DM Sans' },
+                            bodyFont: { family: 'JetBrains Mono', size: 11 },
+                            callbacks: {
+                                title: (items) => `${items[0].parsed.x.toFixed(0)} Hz`,
+                                label: (item) => `${item.dataset.label}: α = ${item.parsed.y.toFixed(3)}`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function drawPanel(data) {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (canvas.width < 50 || canvas.height < 50) return;
+
+            const marginTop = 50, marginBottom = 45, marginX = 70;
+            const maxDrawWidth = canvas.width - 2 * marginX;
+            const maxDrawHeight = canvas.height - marginTop - marginBottom;
+
+            const { panel_ancho, panel_alto, diametro_perf, filas, columnas, profundidad_camara } = data;
+            if (panel_ancho <= 0 || panel_alto <= 0 || maxDrawWidth <= 0 || maxDrawHeight <= 0) return;
+
+            const aspectRatio = panel_ancho / panel_alto;
+            const drawAspect = maxDrawWidth / maxDrawHeight;
+
+            let drawW, drawH;
+            if (aspectRatio > drawAspect) {
+                drawW = maxDrawWidth;
+                drawH = drawW / aspectRatio;
+            } else {
+                drawH = maxDrawHeight;
+                drawW = drawH * aspectRatio;
+            }
+
+            const x0 = marginX + (maxDrawWidth - drawW) / 2;
+            const y0 = marginTop + (maxDrawHeight - drawH) / 2;
+            const depth3D = Math.min(drawW * 0.07, 16);
+
+            ctx.fillStyle = '#D4B896';
+            ctx.strokeStyle = '#6B4423';
+            ctx.lineWidth = 1;
+            ctx.fillRect(x0 + depth3D, y0 - depth3D, drawW, drawH);
+            ctx.strokeRect(x0 + depth3D, y0 - depth3D, drawW, drawH);
+
+            ctx.fillStyle = '#A67B5B';
+            ctx.beginPath();
+            ctx.moveTo(x0 + drawW, y0 + drawH);
+            ctx.lineTo(x0 + drawW + depth3D, y0 + drawH - depth3D);
+            ctx.lineTo(x0 + drawW + depth3D, y0 - depth3D);
+            ctx.lineTo(x0 + drawW, y0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x0, y0 + drawH);
+            ctx.lineTo(x0 + drawW, y0 + drawH);
+            ctx.lineTo(x0 + drawW + depth3D, y0 + drawH - depth3D);
+            ctx.lineTo(x0 + depth3D, y0 + drawH - depth3D);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#F5EDE4';
+            ctx.strokeStyle = '#6B4423';
+            ctx.lineWidth = 2;
+            ctx.fillRect(x0, y0, drawW, drawH);
+            ctx.strokeRect(x0, y0, drawW, drawH);
+
+            if (filas > 0 && columnas > 0 && diametro_perf > 0) {
+                const spaceX = drawW / columnas;
+                const spaceY = drawH / filas;
+                let visualD = (diametro_perf / panel_ancho) * drawW;
+                visualD = Math.min(visualD, spaceX * 0.85, spaceY * 0.85, 20);
+                visualD = Math.max(visualD, 2);
+
+                ctx.fillStyle = '#404040';
+                for (let i = 0; i < filas; i++) {
+                    for (let j = 0; j < columnas; j++) {
+                        const cx = x0 + j * spaceX + spaceX / 2;
+                        const cy = y0 + i * spaceY + spaceY / 2;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, visualD / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            ctx.fillStyle = '#2C2420';
+            ctx.font = '12px "DM Sans", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Ancho: ${panel_ancho.toFixed(0)} mm`, x0 + drawW / 2, y0 + drawH + 25);
+
+            ctx.save();
+            ctx.translate(x0 - 30, y0 + drawH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(`Alto: ${panel_alto.toFixed(0)} mm`, 0, 0);
+            ctx.restore();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+
+            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            if (tabName === 'absorption') {
+                setTimeout(updateChart, 100);
+            } else {
+                setTimeout(() => drawPanel(getValues()), 100);
+            }
+        }
+
+        function proposeMultipleSolutions() {
+            const targetFreq = parseInt(document.getElementById('frecuencia_objetivo').value);
+            if (targetFreq <= 0 || targetFreq < 20 || targetFreq > 2000) {
+                showToast('La frecuencia objetivo debe estar entre 20 y 2000 Hz', 'warning');
+                return;
+            }
+
+            const fixedStates = Object.fromEntries(
+                Object.entries(fixedCheckboxes).map(([k, v]) => [k, v.checked])
+            );
+            const currentValues = getValues();
+            const solutions = [];
+
+            showToast('Buscando soluciones...', 'info');
+
+            function getRange(base, steps = 5) {
+                return Array.from({ length: steps }, (_, i) => base * (0.75 + i * 0.125));
+            }
+
+            const espesorRange = fixedStates.espesor_panel ? [currentValues.espesor_panel] : getRange(18, 4);
+            const profRange = fixedStates.profundidad_camara ? [currentValues.profundidad_camara] : getRange(100, 5);
+            const diamRange = fixedStates.diametro_perf ? [currentValues.diametro_perf] : Array.from({ length: 15 }, (_, i) => 8 + i * 2);
+            const altoRange = fixedStates.panel_alto ? [currentValues.panel_alto] : Array.from({ length: 10 }, (_, i) => 350 + i * 15);
+
+            for (const esp of espesorRange) {
+                const t_m = esp / 1000;
+                for (const diam of diamRange) {
+                    const d_m = diam / 1000;
+                    const L_eff = t_m + 0.8 * d_m;
+                    if (L_eff <= 0) continue;
+
+                    for (const prof of profRange) {
+                        const D_m = prof / 1000;
+                        const termFreq = Math.pow(targetFreq * 2 * Math.PI / C, 2);
+                        const pReq = termFreq * D_m * L_eff;
+                        if (pReq < 0.015 || pReq > 0.25) continue;
+
+                        for (const alto of altoRange) {
+                            const ancho = fixedStates.panel_ancho ? currentValues.panel_ancho : Math.round(alto * 1.5);
+                            const areaPanel = (ancho / 1000) * (alto / 1000);
+                            const areaPerfReq = pReq * areaPanel;
+                            const areaOnePerf = Math.PI * Math.pow(d_m / 2, 2);
+                            if (areaOnePerf === 0) continue;
+
+                            const nPerf = Math.round(areaPerfReq / areaOnePerf);
+                            if (nPerf <= 4) continue;
+
+                            const [filas, columnas] = findSymmetricFactors(nPerf);
+                            if (fixedStates.filas && filas !== currentValues.filas) continue;
+                            if (fixedStates.columnas && columnas !== currentValues.columnas) continue;
+
+                            const minSpacing = d_m * 1.5;
+                            const spacingX = (ancho / 1000) / columnas;
+                            const spacingY = (alto / 1000) / filas;
+
+                            if (columnas > 0 && spacingX > minSpacing &&
+                                filas > 0 && spacingY > minSpacing) {
+
+
+                                const area = ancho * alto;
+                                const cost = nPerf;
+                                const symmetry = Math.min(filas, columnas) / Math.max(filas, columnas);
+                                const spacingScore = Math.min(spacingX, spacingY) / (d_m * 2);
+
+                                const score = (
+                                    50 * (1 - Math.min(area, 1000000) / 1000000) +
+                                    30 * (1 - Math.min(cost, 300) / 300) +
+                                    20 * symmetry
+                                ) * Math.min(spacingScore, 1);
+
+                                solutions.push({
+                                    diametro_perf: diam,
+                                    profundidad_camara: prof,
+                                    filas,
+                                    columnas,
+                                    panel_ancho: ancho,
+                                    panel_alto: alto,
+                                    espesor_panel: esp,
+                                    score: Math.round(score),
+                                    nPerf
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (solutions.length === 0) {
+                showToast('Sin solución. Por favor liberá algunas restricciones.', 'warning');
+                return;
+            }
+
+
+            solutions.sort((a, b) => b.score - a.score);
+
+
+            currentSolutions = solutions.slice(0, Math.min(10, solutions.length));
+            displaySolutionsModal(currentSolutions, targetFreq);
+        }
+
+        function displaySolutionsModal(solutions, targetFreq) {
+            const modal = document.getElementById('solutionsModal');
+            const list = document.getElementById('solutionsList');
+            const count = document.getElementById('solutions_count');
+
+            count.textContent = solutions.length;
+            list.innerHTML = '';
+            selectedSolutionIndex = -1;
+
+            solutions.forEach((sol, idx) => {
+                const card = document.createElement('div');
+                card.className = 'solution-card';
+                card.onclick = () => selectSolution(idx);
+
+                const criteria = [];
+                if (sol.score > 70) criteria.push('Compacto');
+                if (sol.nPerf < 100) criteria.push('Económico');
+                if (Math.abs(sol.filas - sol.columnas) <= 2) criteria.push('Simétrico');
+
+                card.innerHTML = `
+                    <div class="solution-header">
+                        <div class="solution-title">Solución ${idx + 1} - ${criteria.join(', ') || 'Viable'}</div>
+                        <div class="solution-score">${sol.score} pts</div>
+                    </div>
+                    <div class="solution-details">
+                        <div class="solution-detail">
+                            <span>Dimensiones:</span>
+                            <span>${Math.round(sol.panel_ancho)}×${Math.round(sol.panel_alto)} mm</span>
+                        </div>
+                        <div class="solution-detail">
+                            <span>Perforaciones:</span>
+                            <span>${sol.filas}×${sol.columnas} (${sol.nPerf})</span>
+                        </div>
+                        <div class="solution-detail">
+                            <span>Diámetro:</span>
+                            <span>${sol.diametro_perf} mm</span>
+                        </div>
+                        <div class="solution-detail">
+                            <span>Profundidad:</span>
+                            <span>${Math.round(sol.profundidad_camara)} mm</span>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+
+            modal.classList.add('active');
+        }
+
+        function selectSolution(index) {
+            selectedSolutionIndex = index;
+            const cards = document.querySelectorAll('.solution-card');
+            cards.forEach((card, idx) => {
+                card.classList.toggle('selected', idx === index);
+            });
+        }
+
+        function applySelectedSolution() {
+            if (selectedSolutionIndex < 0) {
+                showToast('Selecciona una solución primero', 'warning');
+                return;
+            }
+
+            const solution = currentSolutions[selectedSolutionIndex];
+            const fixedStates = Object.fromEntries(
+                Object.entries(fixedCheckboxes).map(([k, v]) => [k, v.checked])
+            );
+
+            for (const [key, value] of Object.entries(solution)) {
+                if (inputs[key] && !fixedStates[key]) {
+                    inputs[key].value = Math.round(value * 100) / 100;
+                }
+            }
+
+            closeSolutionsModal();
+            updateDisplay();
+            showToast('Diseño aplicado correctamente', 'success');
+        }
+
+        function closeSolutionsModal() {
+            document.getElementById('solutionsModal').classList.remove('active');
+        }
+
+        function findSymmetricFactors(n) {
+            if (n <= 0) return [0, 0];
+            for (let i = Math.floor(Math.sqrt(n)); i > 0; i--) {
+                if (n % i === 0) return [i, n / i];
+            }
+            return [1, n];
+        }
+
+        function draw3DPanel(data) {
+            if (!renderer3D) {
+                const container = document.getElementById('panel3DContainer');
+                scene3D = new THREE.Scene();
+                scene3D.background = new THREE.Color(0xFDF8F3);
+
+                camera3D = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+                camera3D.position.set(300, 250, 400);
+                camera3D.lookAt(0, 0, 0);
+
+                renderer3D = new THREE.WebGLRenderer({ antialias: true });
+                renderer3D.setSize(container.clientWidth, container.clientHeight);
+                container.appendChild(renderer3D.domElement);
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene3D.add(ambientLight);
+
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(200, 300, 200);
+                scene3D.add(directionalLight);
+            }
+
+
+            while (scene3D.children.length > 2) {
+                scene3D.remove(scene3D.children[2]);
+            }
+
+            const { panel_ancho, panel_alto, espesor_panel, profundidad_camara, diametro_perf, filas, columnas } = data;
+
+
+            const backGeom = new THREE.BoxGeometry(panel_ancho, panel_alto, profundidad_camara);
+            const backMat = new THREE.MeshLambertMaterial({ color: 0xA67B5B, side: THREE.DoubleSide });
+            const backMesh = new THREE.Mesh(backGeom, backMat);
+            backMesh.position.z = -profundidad_camara / 2;
+            scene3D.add(backMesh);
+
+
+            const panelGeom = new THREE.BoxGeometry(panel_ancho, panel_alto, espesor_panel);
+            const panelMat = new THREE.MeshLambertMaterial({ color: 0xF5EDE4 });
+            const panelMesh = new THREE.Mesh(panelGeom, panelMat);
+            panelMesh.position.z = espesor_panel / 2;
+            scene3D.add(panelMesh);
+
+
+            const holeGeom = new THREE.CylinderGeometry(diametro_perf / 2, diametro_perf / 2, espesor_panel, 16);
+            const holeMat = new THREE.MeshLambertMaterial({ color: 0x202020 });
+
+            const spaceX = panel_ancho / columnas;
+            const spaceY = panel_alto / filas;
+
+            for (let i = 0; i < filas; i++) {
+                for (let j = 0; j < columnas; j++) {
+                    const hole = new THREE.Mesh(holeGeom, holeMat);
+                    hole.rotation.x = Math.PI / 2;
+                    hole.position.x = -panel_ancho / 2 + j * spaceX + spaceX / 2;
+                    hole.position.y = -panel_alto / 2 + i * spaceY + spaceY / 2;
+                    hole.position.z = espesor_panel / 2;
+                    scene3D.add(hole);
+                }
+            }
+
+            renderer3D.render(scene3D, camera3D);
+
+
+            function animate() {
+                if (currentView === '3d') {
+                    requestAnimationFrame(animate);
+                    scene3D.rotation.y += 0.005;
+                    renderer3D.render(scene3D, camera3D);
+                }
+            }
+            animate();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            const canvas2D = document.getElementById('panelCanvas');
+            const container3D = document.getElementById('panel3DContainer');
+            const buttons = document.querySelectorAll('.view-toggle button');
+
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            if (view === '2d') {
+                canvas2D.style.display = 'block';
+                container3D.style.display = 'none';
+                buttons[0].classList.add('active');
+                drawPanel(getValues());
+            } else {
+                canvas2D.style.display = 'none';
+                container3D.style.display = 'block';
+                buttons[1].classList.add('active');
+                draw3DPanel(getValues());
+            }
+        }
+
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            const data = getValues();
+            const results = calculateFrequency(data);
+            const absorberParams = getAbsorberParams();
+
+
+            pdf.setFontSize(20);
+            pdf.setTextColor(139, 58, 48);
+            pdf.text('Especificaciones Técnicas', 20, 20);
+            pdf.text('Resonador Helmholtz', 20, 30);
+
+
+            pdf.setFontSize(10);
+            pdf.setTextColor(92, 84, 77);
+            pdf.text('Diseñado por Verio', 20, 40);
+            pdf.text(`Fecha: ${new Date().toLocaleDateString()}`, 20, 45);
+
+
+            pdf.setFontSize(14);
+            pdf.setTextColor(44, 36, 32);
+            pdf.text('Parámetros del Panel', 20, 60);
+
+            pdf.setFontSize(10);
+            pdf.setTextColor(92, 84, 77);
+            let y = 70;
+            pdf.text(`Ancho: ${data.panel_ancho} mm`, 30, y); y += 7;
+            pdf.text(`Alto: ${data.panel_alto} mm`, 30, y); y += 7;
+            pdf.text(`Diámetro de perforación: ${data.diametro_perf} mm`, 30, y); y += 7;
+            pdf.text(`Configuración: ${data.filas} × ${data.columnas} = ${data.filas * data.columnas} perforaciones`, 30, y); y += 7;
+            pdf.text(`Espesor del panel: ${data.espesor_panel} mm`, 30, y); y += 7;
+            pdf.text(`Profundidad de la cámara: ${data.profundidad_camara} mm`, 30, y); y += 10;
+
+
+            pdf.setFontSize(14);
+            pdf.setTextColor(44, 36, 32);
+            pdf.text('Resultados de Diseño', 20, y); y += 10;
+
+            pdf.setFontSize(10);
+            pdf.setTextColor(92, 84, 77);
+            pdf.text(`Frecuencia de resonancia: ${results.frecuencia.toFixed(1)} Hz`, 30, y); y += 7;
+            pdf.text(`Ratio de perforación: ${results.ratio.toFixed(4)}`, 30, y); y += 7;
+
+            const alphaAtRes = calculateAbsorption(results.frecuencia, data, absorberParams);
+            const alphaDisplay = absorberParams.useAbsorber ? alphaAtRes.alphaWithAbsorber : alphaAtRes.alpha;
+            pdf.text(`Coeficiente de absorción máximo: ${alphaDisplay.toFixed(3)}`, 30, y); y += 10;
+
+            if (absorberParams.useAbsorber) {
+                pdf.setFontSize(14);
+                pdf.setTextColor(44, 36, 32);
+                pdf.text('Material Absorbente', 20, y); y += 10;
+
+                pdf.setFontSize(10);
+                pdf.setTextColor(92, 84, 77);
+                pdf.text(`Resistividad al flujo: ${absorberParams.flowResistivity} Pa·s/m²`, 30, y); y += 7;
+                pdf.text(`Espesor: ${absorberParams.thickness} mm`, 30, y); y += 7;
+                pdf.text(`Posición: ${absorberParams.position}`, 30, y); y += 10;
+            }
+
+
+            pdf.addPage();
+            pdf.setFontSize(18);
+            pdf.setTextColor(139, 58, 48);
+            pdf.text('Plantilla de Fabricación', 20, 20);
+
+            pdf.setFontSize(10);
+            pdf.setTextColor(92, 84, 77);
+            pdf.text('Escala 1:10 - Vista frontal del panel', 20, 30);
+
+
+            const scale = 0.1;
+            const startX = 50;
+            const startY = 50;
+            const w = data.panel_ancho * scale;
+            const h = data.panel_alto * scale;
+
+
+            pdf.setDrawColor(107, 68, 35);
+            pdf.setLineWidth(0.5);
+            pdf.rect(startX, startY, w, h);
+
+
+            pdf.setFillColor(64, 64, 64);
+            const spaceX = w / data.columnas;
+            const spaceY = h / data.filas;
+            const r = data.diametro_perf * scale / 2;
+
+            for (let i = 0; i < data.filas; i++) {
+                for (let j = 0; j < data.columnas; j++) {
+                    const cx = startX + j * spaceX + spaceX / 2;
+                    const cy = startY + i * spaceY + spaceY / 2;
+                    pdf.circle(cx, cy, r, 'F');
+                }
+            }
+
+
+            pdf.setFontSize(8);
+            pdf.setTextColor(44, 36, 32);
+            pdf.text(`${data.panel_ancho} mm`, startX + w / 2 - 10, startY + h + 10);
+            pdf.text(`${data.panel_alto} mm`, startX - 20, startY + h / 2);
+
+
+            pdf.setFontSize(9);
+            y = startY + h + 30;
+            pdf.text('Notas de fabricación:', 20, y); y += 7;
+            pdf.setFontSize(8);
+            pdf.text(`- Tolerancia de perforación: ±0.5 mm`, 25, y); y += 6;
+            pdf.text(`- Material recomendado: MDF, contrachapado o panel de madera maciza`, 25, y); y += 6;
+            pdf.text(`- Acabado: Sellador acústico en bordes, pintura o barniz opcional`, 25, y); y += 6;
+            pdf.text(`- Espaciado entre perforaciones: ${(data.panel_ancho / data.columnas).toFixed(1)} mm (horizontal) × ${(data.panel_alto / data.filas).toFixed(1)} mm (vertical)`, 25, y);
+
+            pdf.save('resonador_helmholtz_planos.pdf');
+            closeExportModal();
+            showToast('PDF exportado correctamente', 'success');
+        }
+
+        function exportToCSV() {
+            const data = getValues();
+
+
+            Object.keys(inputs).forEach(name => {
+                validateInput(name, data[name]);
+            });
+
+
+            validateSpacing(data);
+
+            const absorberParams = getAbsorberParams();
+            const results = calculateFrequency(data);
+
+
+            if (results.frecuencia > 0) {
+                validateFrequencyRange(results.frecuencia);
+            }
+
+            let csv = 'Parámetro,Valor\n';
+            csv += `Ancho Panel (mm),${data.panel_ancho}\n`;
+            csv += `Alto Panel (mm),${data.panel_alto}\n`;
+            csv += `Diámetro Perforación (mm),${data.diametro_perf}\n`;
+            csv += `Filas,${data.filas}\n`;
+            csv += `Columnas,${data.columnas}\n`;
+            csv += `Espesor Panel (mm),${data.espesor_panel}\n`;
+            csv += `Profundidad Cámara (mm),${data.profundidad_camara}\n`;
+            csv += `Total Perforaciones,${data.filas * data.columnas}\n`;
+            csv += `Frecuencia Resonancia (Hz),${results.frecuencia.toFixed(2)}\n`;
+            csv += `Ratio Perforación,${results.ratio.toFixed(4)}\n`;
+
+            if (absorberParams.useAbsorber) {
+                csv += `\nMaterial Absorbente\n`;
+                csv += `Resistividad Flujo (Pa·s/m²),${absorberParams.flowResistivity}\n`;
+                csv += `Espesor Material (mm),${absorberParams.thickness}\n`;
+                csv += `Posición,${absorberParams.position}\n`;
+            }
+
+            csv += `\nFrecuencia (Hz),α sin material,α con material\n`;
+            const freqs = [50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000];
+            for (const f of freqs) {
+                const abs = calculateAbsorption(f, data, absorberParams);
+                csv += `${f},${abs.alpha.toFixed(3)},${abs.alphaWithAbsorber.toFixed(3)}\n`;
+            }
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'resonador_helmholtz.csv';
+            link.click();
+
+            closeExportModal();
+            showToast('CSV exportado correctamente', 'success');
+        }
+
+        function showExportModal() {
+            document.getElementById('exportModal').classList.add('active');
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', updateDisplay);
+        });
+
+        document.getElementById('flow_resistivity').addEventListener('input', updateDisplay);
+        document.getElementById('absorber_thickness').addEventListener('input', updateDisplay);
+        document.getElementById('absorber_position').addEventListener('change', updateDisplay);
+
+        window.addEventListener('resize', () => {
+            drawPanel(getValues());
+            if (document.getElementById('tab-absorption').classList.contains('active')) {
+                updateChart();
+            }
+        });
+
+        document.getElementById('exportModal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) closeExportModal();
+        });
+
+        updateDisplay();
+    </script>
+</body>
+
+</html>
